@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Set Up Your Profile — StudyBuddy</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    /* ── Profile-page-specific styles ── */
+    .profile-wrapper {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 2rem 1rem 4rem;
+      background: var(--bg-dark);
+    }
+
+    /* ── Brand strip ── */
+    .profile-brand {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 2rem;
+      letter-spacing: -0.5px;
+    }
+    .profile-brand a { color: inherit; text-decoration: none; }
+
+    /* ── Progress bar ── */
+    .progress-bar-wrap {
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 2.5rem;
+    }
+    .steps-track {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+    }
+    .step-node {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      flex: 1;
+    }
+    .step-node:last-child { flex: 0; }
+    .step-bubble {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,0.15);
+      background: var(--bg-card);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      color: var(--text-muted);
+      transition: all 0.4s ease;
+      position: relative;
+      z-index: 1;
+    }
+    .step-node.active   .step-bubble { border-color: var(--primary); background: var(--primary); color: #fff; box-shadow: 0 0 20px rgba(108,99,255,0.5); }
+    .step-node.done     .step-bubble { border-color: #48CAE4; background: #48CAE4; color: #fff; }
+    .step-node.inactive .step-bubble { border-color: rgba(255,255,255,0.1); background: var(--bg-card); color: var(--text-muted); }
+
+    .step-label {
+      margin-top: 0.5rem;
+      font-size: 0.72rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      white-space: nowrap;
+      transition: color 0.3s;
+    }
+    .step-node.active .step-label { color: var(--primary); }
+    .step-node.done   .step-label { color: #48CAE4; }
+
+    .step-line {
+      flex: 1;
+      height: 2px;
+      background: rgba(255,255,255,0.1);
+      margin: 0 4px;
+      margin-bottom: 20px;
+      transition: background 0.4s;
+    }
+    .step-line.done { background: #48CAE4; }
+
+    /* ── Wizard card ── */
+    .wizard-card {
+      width: 100%;
+      max-width: 680px;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 20px;
+      padding: 2.5rem;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* ── Step panels ── */
+    .step-panel {
+      display: none;
+      animation: slideInRight 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .step-panel.active { display: block; }
+    .step-panel.slide-out {
+      animation: slideOutLeft 0.3s cubic-bezier(0.55, 0, 0.1, 1) forwards;
+    }
+    .step-panel.slide-back-in {
+      animation: slideInLeft 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes slideOutLeft {
+      from { opacity: 1; transform: translateX(0); }
+      to   { opacity: 0; transform: translateX(-40px); }
+    }
+    @keyframes slideInLeft {
+      from { opacity: 0; transform: translateX(-40px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+
+    .step-heading {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+    .step-subheading {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+    }
+
+    /* ── Form elements ── */
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .form-group label .req { color: var(--accent); margin-left: 2px; }
+
+    .form-input, .form-select, .form-textarea {
+      width: 100%;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: var(--text);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      padding: 0.75rem 1rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      outline: none;
+      box-sizing: border-box;
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.2);
+    }
+    .form-input.error, .form-select.error, .form-textarea.error {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(247,37,133,0.15);
+    }
+    .form-select { cursor: pointer; }
+    .form-select option { background: var(--bg-card); color: var(--text); }
+    .form-textarea { resize: vertical; min-height: 90px; }
+
+    .char-counter {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-align: right;
+      margin-top: 0.3rem;
+    }
+    .char-counter.warn { color: var(--accent); }
+
+    .field-error {
+      font-size: 0.78rem;
+      color: var(--accent);
+      margin-top: 0.3rem;
+      display: none;
+    }
+    .field-error.visible { display: block; }
+
+    /* ── Avatar picker ── */
+    .avatar-grid {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-top: 0.5rem;
+    }
+    .avatar-option {
+      position: relative;
+      cursor: pointer;
+    }
+    .avatar-option img {
+      width: 64px;
+      height: 64px;
+      border-radius: 50%;
+      border: 3px solid transparent;
+      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+      display: block;
+    }
+    .avatar-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0; height: 0;
+    }
+    .avatar-option img:hover {
+      transform: scale(1.08);
+      border-color: rgba(108,99,255,0.5);
+    }
+    .avatar-option input[type="radio"]:checked + img {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.3), 0 4px 16px rgba(108,99,255,0.4);
+      transform: scale(1.1);
+    }
+
+    /* ── Subjects grid ── */
+    .subjects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.5rem;
+    }
+    .subject-check {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 0.6rem 0.8rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .subject-check:hover { background: rgba(108,99,255,0.1); border-color: rgba(108,99,255,0.3); }
+    .subject-check input[type="checkbox"] { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
+    .subject-check span { font-size: 0.88rem; color: var(--text); }
+    .subject-check:has(input:checked) { background: rgba(108,99,255,0.15); border-color: var(--primary); }
+
+    /* ── Study style cards ── */
+    .style-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 1rem;
+      margin-top: 0.5rem;
+    }
+    .style-card {
+      position: relative;
+      cursor: pointer;
+    }
+    .style-card input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+      width: 0; height: 0;
+    }
+    .style-card-inner {
+      border: 2px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 1.4rem 1rem;
+      text-align: center;
+      transition: border-color 0.2s, background 0.2s, transform 0.2s, box-shadow 0.2s;
+      background: rgba(255,255,255,0.03);
+    }
+    .style-card-inner:hover {
+      border-color: rgba(108,99,255,0.4);
+      background: rgba(108,99,255,0.08);
+      transform: translateY(-2px);
+    }
+    .style-card input[type="radio"]:checked + .style-card-inner {
+      border-color: var(--primary);
+      background: rgba(108,99,255,0.18);
+      box-shadow: 0 4px 20px rgba(108,99,255,0.25);
+      transform: translateY(-3px);
+    }
+    .style-emoji { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+    .style-name { font-size: 0.95rem; font-weight: 700; color: var(--text); display: block; margin-bottom: 0.3rem; }
+    .style-desc { font-size: 0.78rem; color: var(--text-muted); }
+
+    /* ── Range slider ── */
+    .slider-wrap { display: flex; align-items: center; gap: 1rem; }
+    input[type="range"] {
+      flex: 1;
+      -webkit-appearance: none;
+      appearance: none;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.12);
+      outline: none;
+      cursor: pointer;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 20px; height: 20px;
+      border-radius: 50%;
+      background: var(--primary);
+      box-shadow: 0 0 8px rgba(108,99,255,0.5);
+      cursor: pointer;
+      transition: transform 0.15s;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+    .slider-value {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--primary);
+      min-width: 54px;
+      text-align: center;
+      background: rgba(108,99,255,0.1);
+      border-radius: 8px;
+      padding: 0.2rem 0.5rem;
+    }
+
+    /* ── Radio buttons (time preference) ── */
+    .radio-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 0.6rem;
+      margin-top: 0.5rem;
+    }
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      padding: 0.7rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+    }
+    .radio-option:hover { background: rgba(108,99,255,0.1); border-color: rgba(108,99,255,0.3); }
+    .radio-option input[type="radio"] { accent-color: var(--primary); width: 16px; height: 16px; cursor: pointer; }
+    .radio-option span { font-size: 0.88rem; color: var(--text); }
+    .radio-option:has(input:checked) { background: rgba(108,99,255,0.15); border-color: var(--primary); }
+
+    /* ── Navigation buttons ── */
+    .wizard-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 2.5rem;
+      gap: 1rem;
+    }
+    .btn-back {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 10px;
+      color: var(--text-muted);
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 600;
+      padding: 0.75rem 1.4rem;
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
+    }
+    .btn-back:hover { background: rgba(255,255,255,0.1); color: var(--text); }
+    .btn-next {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, var(--primary) 0%, #8B5CF6 100%);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.75rem 1.8rem;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s, opacity 0.2s;
+      margin-left: auto;
+    }
+    .btn-next:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(108,99,255,0.45); }
+    .btn-next:active { transform: translateY(0); }
+    .btn-launch {
+      background: linear-gradient(135deg, var(--accent) 0%, #FF6B9D 100%);
+      box-shadow: 0 4px 16px rgba(247,37,133,0.3);
+    }
+    .btn-launch:hover { box-shadow: 0 8px 28px rgba(247,37,133,0.5); }
+
+    /* ── Toast (reused from app.js, local fallback) ── */
+    .toast-local {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      background: var(--bg-card);
+      border: 1px solid rgba(255,255,255,0.12);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 0.88rem;
+      padding: 0.8rem 1.4rem;
+      z-index: 9999;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.3s, transform 0.3s;
+      pointer-events: none;
+    }
+    .toast-local.show { opacity: 1; transform: translateY(0); }
+
+    /* ── Responsive ── */
+    @media (max-width: 600px) {
+      .wizard-card { padding: 1.5rem; }
+      .style-cards { grid-template-columns: 1fr; }
+      .avatar-grid { gap: 0.6rem; }
+      .avatar-option img { width: 54px; height: 54px; }
+      .radio-group { grid-template-columns: 1fr; }
+      .subjects-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="profile-wrapper">
+
+    <!-- Brand -->
+    <div class="profile-brand">
+      <a href="index.html">📚 StudyBuddy</a>
+    </div>
+
+    <!-- Progress indicator -->
+    <div class="progress-bar-wrap">
+      <div class="steps-track">
+        <!-- Step 1 -->
+        <div class="step-node active" id="node-1">
+          <div class="step-bubble"><i class="fa-solid fa-user"></i></div>
+          <span class="step-label">About You</span>
+        </div>
+        <div class="step-line" id="line-1"></div>
+
+        <!-- Step 2 -->
+        <div class="step-node inactive" id="node-2">
+          <div class="step-bubble"><i class="fa-solid fa-book-open"></i></div>
+          <span class="step-label">Preferences</span>
+        </div>
+        <div class="step-line" id="line-2"></div>
+
+        <!-- Step 3 -->
+        <div class="step-node inactive" id="node-3">
+          <div class="step-bubble"><i class="fa-solid fa-calendar-check"></i></div>
+          <span class="step-label">Schedule</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Wizard card -->
+    <div class="wizard-card">
+
+      <!-- ════════════════════ STEP 1 ════════════════════ -->
+      <div class="step-panel active" id="step-1">
+        <h2 class="step-heading">👋 About You</h2>
+        <p class="step-subheading">Let's start with the basics — tell us who you are.</p>
+
+        <!-- Full Name -->
+        <div class="form-group">
+          <label for="fullName">Full Name <span class="req">*</span></label>
+          <input class="form-input" type="text" id="fullName" placeholder="e.g. Priya Sharma" autocomplete="off" />
+          <div class="field-error" id="err-name">Please enter your full name.</div>
+        </div>
+
+        <!-- Avatar picker -->
+        <div class="form-group">
+          <label>Profile Photo</label>
+          <div class="avatar-grid" id="avatarGrid">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <!-- Bio -->
+        <div class="form-group">
+          <label for="bio">Bio <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">(optional)</span></label>
+          <textarea class="form-textarea" id="bio" placeholder="A short intro about yourself, your goals, study habits…" maxlength="200"></textarea>
+          <div class="char-counter"><span id="bioCount">0</span>/200</div>
+        </div>
+
+        <div class="wizard-nav">
+          <!-- No back on step 1 -->
+          <span></span>
+          <button class="btn-next" id="next1">Next <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>
+
+      <!-- ════════════════════ STEP 2 ════════════════════ -->
+      <div class="step-panel" id="step-2">
+        <h2 class="step-heading">📚 Study Preferences</h2>
+        <p class="step-subheading">Help us find the best matches for your subjects and style.</p>
+
+        <!-- Subjects -->
+        <div class="form-group">
+          <label>Subjects <span class="req">*</span> <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">(select all that apply)</span></label>
+          <div class="subjects-grid">
+            <label class="subject-check"><input type="checkbox" value="Mathematics" /><span>➕ Mathematics</span></label>
+            <label class="subject-check"><input type="checkbox" value="Physics" /><span>⚛️ Physics</span></label>
+            <label class="subject-check"><input type="checkbox" value="Chemistry" /><span>🧪 Chemistry</span></label>
+            <label class="subject-check"><input type="checkbox" value="Biology" /><span>🧬 Biology</span></label>
+            <label class="subject-check"><input type="checkbox" value="History" /><span>📜 History</span></label>
+            <label class="subject-check"><input type="checkbox" value="Computer Science" /><span>💻 Computer Science</span></label>
+            <label class="subject-check"><input type="checkbox" value="Literature" /><span>📖 Literature</span></label>
+            <label class="subject-check"><input type="checkbox" value="Economics" /><span>📊 Economics</span></label>
+            <label class="subject-check"><input type="checkbox" value="Geography" /><span>🌍 Geography</span></label>
+            <label class="subject-check"><input type="checkbox" value="Psychology" /><span>🧠 Psychology</span></label>
+          </div>
+          <div class="field-error" id="err-subjects">Please select at least one subject.</div>
+        </div>
+
+        <!-- Exam Target -->
+        <div class="form-group">
+          <label for="examTarget">Exam Target <span class="req">*</span></label>
+          <select class="form-select" id="examTarget">
+            <option value="" disabled selected>— Select your exam —</option>
+            <option value="SAT">SAT</option>
+            <option value="JEE">JEE</option>
+            <option value="UPSC">UPSC</option>
+            <option value="GMAT">GMAT</option>
+            <option value="GRE">GRE</option>
+            <option value="IELTS">IELTS</option>
+            <option value="Board Exams">Board Exams</option>
+            <option value="Other">Other</option>
+          </select>
+          <div class="field-error" id="err-exam">Please select your exam target.</div>
+        </div>
+
+        <!-- Study Style -->
+        <div class="form-group">
+          <label>Study Style <span class="req">*</span></label>
+          <div class="style-cards">
+            <label class="style-card">
+              <input type="radio" name="studyStyle" value="deep-focus" />
+              <div class="style-card-inner">
+                <span class="style-emoji">🎯</span>
+                <span class="style-name">Deep Focus</span>
+                <span class="style-desc">Long sessions, minimal interruptions</span>
+              </div>
+            </label>
+            <label class="style-card">
+              <input type="radio" name="studyStyle" value="collaborative" />
+              <div class="style-card-inner">
+                <span class="style-emoji">🤝</span>
+                <span class="style-name">Collaborative</span>
+                <span class="style-desc">Group discussion, peer teaching</span>
+              </div>
+            </label>
+            <label class="style-card">
+              <input type="radio" name="studyStyle" value="mixed" />
+              <div class="style-card-inner">
+                <span class="style-emoji">⚡</span>
+                <span class="style-name">Mixed</span>
+                <span class="style-desc">Flexible, adapt as needed</span>
+              </div>
+            </label>
+          </div>
+          <div class="field-error" id="err-style">Please choose a study style.</div>
+        </div>
+
+        <div class="wizard-nav">
+          <button class="btn-back" id="back2"><i class="fa-solid fa-arrow-left"></i> Back</button>
+          <button class="btn-next" id="next2">Next <i class="fa-solid fa-arrow-right"></i></button>
+        </div>
+      </div>
+
+      <!-- ════════════════════ STEP 3 ════════════════════ -->
+      <div class="step-panel" id="step-3">
+        <h2 class="step-heading">🗓️ Schedule & Goals</h2>
+        <p class="step-subheading">Almost there! Tell us when you study best and what you want to achieve.</p>
+
+        <!-- Timezone -->
+        <div class="form-group">
+          <label for="timezone">Timezone <span class="req">*</span></label>
+          <select class="form-select" id="timezone">
+            <option value="" disabled selected>— Select timezone —</option>
+            <option value="IST">IST — India Standard Time (UTC+5:30)</option>
+            <option value="EST">EST — Eastern Standard Time (UTC−5)</option>
+            <option value="PST">PST — Pacific Standard Time (UTC−8)</option>
+            <option value="CST">CST — Central Standard Time (UTC−6)</option>
+            <option value="GMT">GMT — Greenwich Mean Time (UTC+0)</option>
+            <option value="CET">CET — Central European Time (UTC+1)</option>
+            <option value="JST">JST — Japan Standard Time (UTC+9)</option>
+            <option value="AEST">AEST — Australian Eastern Time (UTC+10)</option>
+          </select>
+          <div class="field-error" id="err-timezone">Please select your timezone.</div>
+        </div>
+
+        <!-- Study Time -->
+        <div class="form-group">
+          <label>Preferred Study Time <span class="req">*</span></label>
+          <div class="radio-group">
+            <label class="radio-option">
+              <input type="radio" name="studyTime" value="morning" />
+              <span>🌅 Morning (6am–12pm)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="studyTime" value="afternoon" />
+              <span>☀️ Afternoon (12pm–6pm)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="studyTime" value="evening" />
+              <span>🌆 Evening (6pm–12am)</span>
+            </label>
+            <label class="radio-option">
+              <input type="radio" name="studyTime" value="night" />
+              <span>🦉 Night Owl (12am–6am)</span>
+            </label>
+          </div>
+          <div class="field-error" id="err-time">Please select a preferred study time.</div>
+        </div>
+
+        <!-- Weekly Hours -->
+        <div class="form-group">
+          <label>Weekly Study Hours Goal</label>
+          <div class="slider-wrap">
+            <input type="range" id="weeklyHours" min="5" max="60" step="1" value="20" />
+            <div class="slider-value"><span id="hoursVal">20</span> <small style="font-size:0.65rem;font-weight:500;color:var(--text-muted)">hrs</small></div>
+          </div>
+        </div>
+
+        <!-- Short-term goal -->
+        <div class="form-group">
+          <label for="shortGoal">Short-Term Goal <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--text-muted)">(optional)</span></label>
+          <input class="form-input" type="text" id="shortGoal" placeholder='e.g. "Pass JEE in 3 months"' autocomplete="off" />
+        </div>
+
+        <div class="wizard-nav">
+          <button class="btn-back" id="back3"><i class="fa-solid fa-arrow-left"></i> Back</button>
+          <button class="btn-next btn-launch" id="launch">Find My Buddies 🚀</button>
+        </div>
+      </div>
+
+    </div><!-- /wizard-card -->
+  </div><!-- /profile-wrapper -->
+
+  <!-- Toast fallback -->
+  <div class="toast-local" id="localToast"></div>
+
+  <script src="js/app.js"></script>
+  <script>
+    /* ══════════════════════════════════════════════════
+       Profile Wizard — step logic, validation, storage
+    ══════════════════════════════════════════════════ */
+
+    // ── State ──────────────────────────────────────────
+    let currentStep = 1;
+    const totalSteps = 3;
+
+    // Avatar letters → colours
+    const AVATAR_OPTS = [
+      { letter: 'A', bg: '6C63FF' },
+      { letter: 'B', bg: 'F72585' },
+      { letter: 'C', bg: '48CAE4' },
+      { letter: 'D', bg: 'FF9F1C' },
+      { letter: 'E', bg: '2EC4B6' },
+      { letter: 'F', bg: 'E71D36' },
+    ];
+
+    // ── Build avatar grid ──────────────────────────────
+    (function buildAvatars() {
+      const grid = document.getElementById('avatarGrid');
+      AVATAR_OPTS.forEach((opt, i) => {
+        const url = `https://ui-avatars.com/api/?name=${opt.letter}&background=${opt.bg}&color=fff&size=80`;
+        const label = document.createElement('label');
+        label.className = 'avatar-option';
+        label.innerHTML = `
+          <input type="radio" name="avatar" value="${url}" ${i === 0 ? 'checked' : ''} />
+          <img src="${url}" alt="Avatar ${opt.letter}" loading="lazy" />
+        `;
+        grid.appendChild(label);
+      });
+    })();
+
+    // ── Bio counter ────────────────────────────────────
+    const bioEl    = document.getElementById('bio');
+    const bioCount = document.getElementById('bioCount');
+    bioEl.addEventListener('input', () => {
+      const len = bioEl.value.length;
+      bioCount.textContent = len;
+      bioCount.parentElement.classList.toggle('warn', len >= 180);
+    });
+
+    // ── Slider live value ─────────────────────────────
+    const slider   = document.getElementById('weeklyHours');
+    const hoursVal = document.getElementById('hoursVal');
+    slider.addEventListener('input', () => { hoursVal.textContent = slider.value; });
+
+    // ── Progress nodes ─────────────────────────────────
+    function updateProgress(step) {
+      for (let i = 1; i <= totalSteps; i++) {
+        const node = document.getElementById(`node-${i}`);
+        node.className = 'step-node ' +
+          (i < step ? 'done' : i === step ? 'active' : 'inactive');
+      }
+      for (let i = 1; i < totalSteps; i++) {
+        const line = document.getElementById(`line-${i}`);
+        line.className = 'step-line ' + (i < step ? 'done' : '');
+      }
+    }
+
+    // ── Go to step ────────────────────────────────────
+    function goTo(next, direction = 'forward') {
+      const curPanel  = document.getElementById(`step-${currentStep}`);
+      const nextPanel = document.getElementById(`step-${next}`);
+
+      // Animate out
+      curPanel.classList.remove('active');
+      curPanel.style.display = 'block';
+      curPanel.classList.add(direction === 'forward' ? 'slide-out' : '');
+
+      setTimeout(() => {
+        curPanel.style.display = 'none';
+        curPanel.classList.remove('slide-out');
+
+        currentStep = next;
+        updateProgress(currentStep);
+
+        nextPanel.style.display = 'block';
+        nextPanel.classList.add('active');
+        nextPanel.classList.add(direction === 'back' ? 'slide-back-in' : '');
+        setTimeout(() => nextPanel.classList.remove('slide-back-in'), 400);
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, direction === 'forward' ? 280 : 0);
+    }
+
+    // ── Validation helpers ─────────────────────────────
+    function showError(id, show) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('visible', show);
+    }
+    function markField(id, hasError) {
+      const el = document.getElementById(id);
+      if (el) el.classList.toggle('error', hasError);
+    }
+
+    function validateStep1() {
+      const name = document.getElementById('fullName').value.trim();
+      const ok   = name.length > 0;
+      markField('fullName', !ok);
+      showError('err-name', !ok);
+      return ok;
+    }
+
+    function validateStep2() {
+      const subjects  = [...document.querySelectorAll('.subjects-grid input:checked')].map(el => el.value);
+      const exam      = document.getElementById('examTarget').value;
+      const style     = document.querySelector('input[name="studyStyle"]:checked');
+
+      const okSub  = subjects.length > 0;
+      const okExam = !!exam;
+      const okSty  = !!style;
+
+      showError('err-subjects', !okSub);
+      markField('examTarget', !okExam);
+      showError('err-exam', !okExam);
+      showError('err-style', !okSty);
+
+      return okSub && okExam && okSty;
+    }
+
+    function validateStep3() {
+      const tz   = document.getElementById('timezone').value;
+      const time = document.querySelector('input[name="studyTime"]:checked');
+
+      const okTz   = !!tz;
+      const okTime = !!time;
+
+      markField('timezone', !okTz);
+      showError('err-timezone', !okTz);
+      showError('err-time', !okTime);
+
+      return okTz && okTime;
+    }
+
+    // ── Collect profile data ───────────────────────────
+    function collectProfile() {
+      return {
+        id:          StudyBuddy.generateId(),
+        name:        document.getElementById('fullName').value.trim(),
+        avatar:      document.querySelector('input[name="avatar"]:checked')?.value || AVATAR_OPTS[0].url,
+        bio:         document.getElementById('bio').value.trim(),
+        subjects:    [...document.querySelectorAll('.subjects-grid input:checked')].map(el => el.value),
+        examTarget:  document.getElementById('examTarget').value,
+        studyStyle:  document.querySelector('input[name="studyStyle"]:checked')?.value,
+        timezone:    document.getElementById('timezone').value,
+        studyTime:   document.querySelector('input[name="studyTime"]:checked')?.value,
+        weeklyHours: parseInt(document.getElementById('weeklyHours').value, 10),
+        shortGoal:   document.getElementById('shortGoal').value.trim(),
+        createdAt:   new Date().toISOString(),
+      };
+    }
+
+    // ── Pre-fill from localStorage ─────────────────────
+    function prefillForm() {
+      const p = StudyBuddy.getProfile();
+      if (!p) return;
+
+      if (p.name)        document.getElementById('fullName').value = p.name;
+      if (p.bio) {
+        document.getElementById('bio').value = p.bio;
+        bioCount.textContent = p.bio.length;
+      }
+      if (p.avatar) {
+        const match = document.querySelector(`input[name="avatar"][value="${p.avatar}"]`);
+        if (match) match.checked = true;
+      }
+      if (p.subjects) {
+        document.querySelectorAll('.subjects-grid input').forEach(cb => {
+          cb.checked = p.subjects.includes(cb.value);
+        });
+      }
+      if (p.examTarget) document.getElementById('examTarget').value = p.examTarget;
+      if (p.studyStyle) {
+        const r = document.querySelector(`input[name="studyStyle"][value="${p.studyStyle}"]`);
+        if (r) r.checked = true;
+      }
+      if (p.timezone) document.getElementById('timezone').value = p.timezone;
+      if (p.studyTime) {
+        const r = document.querySelector(`input[name="studyTime"][value="${p.studyTime}"]`);
+        if (r) r.checked = true;
+      }
+      if (p.weeklyHours) {
+        slider.value = p.weeklyHours;
+        hoursVal.textContent = p.weeklyHours;
+      }
+      if (p.shortGoal)  document.getElementById('shortGoal').value = p.shortGoal;
+    }
+
+    // ── Toast helper ───────────────────────────────────
+    function showToast(msg, type = 'info') {
+      if (window.StudyBuddy && typeof window.StudyBuddy.toast === 'function') {
+        StudyBuddy.toast(msg, type);
+      } else {
+        const t = document.getElementById('localToast');
+        t.textContent = msg;
+        t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 3000);
+      }
+    }
+
+    // ── Button wiring ──────────────────────────────────
+    document.getElementById('next1').addEventListener('click', () => {
+      if (validateStep1()) goTo(2, 'forward');
+    });
+
+    document.getElementById('back2').addEventListener('click', () => {
+      goTo(1, 'back');
+    });
+    document.getElementById('next2').addEventListener('click', () => {
+      if (validateStep2()) goTo(3, 'forward');
+    });
+
+    document.getElementById('back3').addEventListener('click', () => {
+      goTo(2, 'back');
+    });
+
+    document.getElementById('launch').addEventListener('click', () => {
+      if (!validateStep3()) return;
+
+      const profile = collectProfile();
+      StudyBuddy.saveProfile(profile);
+      showToast('Profile saved! Finding your buddies… 🚀', 'success');
+
+      setTimeout(() => {
+        StudyBuddy.navigate('dashboard.html');
+      }, 800);
+    });
+
+    // ── Init ───────────────────────────────────────────
+    prefillForm();
+    updateProgress(1);
+  </script>
+</body>
+</html>

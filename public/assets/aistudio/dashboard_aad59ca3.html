@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Find a Buddy — StudyBuddy</title>
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <style>
+    /* ── Dashboard Layout ── */
+    .dashboard-layout {
+      display: flex;
+      min-height: calc(100vh - var(--navbar-h));
+      padding-top: var(--navbar-h);
+    }
+
+    /* ── Sidebar ── */
+    .filter-sidebar {
+      width: 280px;
+      flex-shrink: 0;
+      background: var(--bg-card);
+      border-right: 1px solid var(--border);
+      padding: 1.75rem 1.25rem;
+      position: sticky;
+      top: var(--navbar-h);
+      height: calc(100vh - var(--navbar-h));
+      overflow-y: auto;
+    }
+
+    .filter-sidebar h2 {
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 1.25rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .filter-section {
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-section-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .subject-checkboxes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+
+    .subject-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.28rem 0.65rem;
+      border-radius: var(--radius-pill);
+      border: 1.5px solid var(--border);
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all var(--transition);
+      background: transparent;
+      user-select: none;
+    }
+    .subject-chip:hover {
+      border-color: var(--primary);
+      color: var(--primary-light);
+      background: rgba(108,99,255,0.08);
+    }
+    .subject-chip.active {
+      border-color: var(--primary);
+      color: var(--primary-light);
+      background: rgba(108,99,255,0.18);
+    }
+
+    .style-radios {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .style-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      padding: 0.35rem 0.5rem;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition), color var(--transition);
+    }
+    .style-radio-label:hover { background: rgba(255,255,255,0.05); color: var(--text); }
+    .style-radio-label input[type="radio"] { accent-color: var(--primary); }
+    .style-radio-label input:checked + span { color: var(--primary-light); font-weight: 600; }
+
+    /* Toggle Switch */
+    .toggle-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+    .toggle-label {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+    .toggle {
+      position: relative;
+      width: 40px;
+      height: 22px;
+    }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-track {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.1);
+      border-radius: var(--radius-pill);
+      cursor: pointer;
+      transition: background var(--transition);
+      border: 1px solid var(--border);
+    }
+    .toggle input:checked + .toggle-track { background: var(--primary); border-color: var(--primary); }
+    .toggle-track::after {
+      content: '';
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      background: #fff;
+      top: 2px;
+      left: 2px;
+      transition: transform var(--transition);
+      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .toggle input:checked + .toggle-track::after { transform: translateX(18px); }
+
+    .reset-btn {
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 0.6rem;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .reset-btn:hover {
+      border-color: var(--danger);
+      color: var(--danger);
+      background: rgba(239,71,111,0.07);
+    }
+
+    /* ── Main Content ── */
+    .main-content {
+      flex: 1;
+      padding: 2rem 1.75rem;
+      min-width: 0;
+    }
+
+    .main-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .main-header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+    }
+
+    .results-info {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* ── Buddy Grid ── */
+    .buddy-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+
+    /* ── Buddy Card ── */
+    .buddy-card {
+      background: rgba(255,255,255,0.04);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      transition: transform var(--transition), box-shadow var(--transition), border-color var(--transition);
+      display: flex;
+      flex-direction: column;
+      gap: 0.85rem;
+    }
+    .buddy-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 16px 48px rgba(108,99,255,0.18);
+      border-color: rgba(108,99,255,0.4);
+    }
+
+    .buddy-card-top {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .buddy-avatar-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .buddy-avatar {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2.5px solid rgba(108,99,255,0.5);
+      object-fit: cover;
+      display: block;
+    }
+    .buddy-online-dot {
+      position: absolute;
+      bottom: 2px;
+      right: 2px;
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: var(--success);
+      border: 2px solid var(--bg-card);
+    }
+
+    .buddy-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .buddy-name-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.25rem;
+    }
+    .buddy-name {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .match-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.72rem;
+      font-weight: 700;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .match-badge.high {
+      background: rgba(6,214,160,0.15);
+      color: var(--success);
+      border: 1px solid rgba(6,214,160,0.3);
+    }
+    .match-badge.mid {
+      background: rgba(255,209,102,0.15);
+      color: var(--warning);
+      border: 1px solid rgba(255,209,102,0.3);
+    }
+    .match-badge.low {
+      background: rgba(154,154,176,0.12);
+      color: var(--text-muted);
+      border: 1px solid rgba(154,154,176,0.2);
+    }
+
+    .buddy-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem 1rem;
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+    .buddy-meta span {
+      display: flex;
+      align-items: center;
+      gap: 0.3rem;
+    }
+    .buddy-meta i {
+      font-size: 0.72rem;
+      opacity: 0.7;
+    }
+
+    /* Subject pills */
+    .subject-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .subject-pill {
+      padding: 0.2rem 0.6rem;
+      border-radius: var(--radius-pill);
+      font-size: 0.72rem;
+      font-weight: 600;
+      background: rgba(108,99,255,0.14);
+      color: var(--primary-light);
+      border: 1px solid rgba(108,99,255,0.25);
+    }
+    .subject-pill.more {
+      background: rgba(154,154,176,0.1);
+      color: var(--text-muted);
+      border-color: rgba(154,154,176,0.2);
+    }
+
+    .buddy-bio {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.55;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .study-style-row {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+    }
+    .study-style-icon {
+      font-size: 0.9rem;
+    }
+
+    .buddy-card-footer {
+      margin-top: auto;
+    }
+    .study-together-btn {
+      width: 100%;
+      padding: 0.6rem 1rem;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+      color: #fff;
+      font-size: 0.88rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      box-shadow: 0 4px 16px rgba(108,99,255,0.3);
+      text-decoration: none;
+    }
+    .study-together-btn:hover {
+      background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary) 100%);
+      box-shadow: 0 6px 24px rgba(108,99,255,0.5);
+      transform: translateY(-2px);
+      color: #fff;
+    }
+
+    /* ── Profile Banner ── */
+    .profile-banner {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 1rem 1.5rem;
+      border-radius: var(--radius);
+      background: rgba(247,37,133,0.1);
+      border: 1px solid rgba(247,37,133,0.3);
+      margin-bottom: 1.75rem;
+      flex-wrap: wrap;
+    }
+    .profile-banner i { color: var(--accent); font-size: 1.3rem; }
+    .profile-banner p { flex: 1; color: var(--text-muted); font-size: 0.9rem; }
+    .profile-banner a { color: var(--accent); font-weight: 600; }
+
+    /* ── Empty State ── */
+    .empty-state-custom {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 4rem 2rem;
+      color: var(--text-muted);
+    }
+    .empty-state-custom .empty-emoji {
+      font-size: 4rem;
+      margin-bottom: 1rem;
+      display: block;
+    }
+    .empty-state-custom h3 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .empty-state-custom p {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* ── Navbar user section ── */
+    .nav-user {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      cursor: pointer;
+    }
+    .nav-user-avatar {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 2px solid var(--primary);
+      object-fit: cover;
+    }
+    .nav-user-name {
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--text);
+      max-width: 120px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* Online badge */
+    .online-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.2rem 0.75rem;
+      border-radius: var(--radius-pill);
+      background: rgba(6,214,160,0.12);
+      border: 1px solid rgba(6,214,160,0.3);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--success);
+    }
+
+    /* ── Mobile filter toggle ── */
+    .mobile-filter-toggle {
+      display: none;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: var(--radius-sm);
+      border: 1.5px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all var(--transition);
+    }
+    .mobile-filter-toggle:hover { border-color: var(--primary); color: var(--primary-light); }
+
+    /* ── Search with icon ── */
+    .search-wrap {
+      position: relative;
+    }
+    .search-wrap i {
+      position: absolute;
+      left: 0.9rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-dim);
+      font-size: 0.85rem;
+      pointer-events: none;
+    }
+    .search-wrap .form-input {
+      padding-left: 2.4rem;
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 900px) {
+      .filter-sidebar {
+        position: fixed;
+        top: var(--navbar-h);
+        left: -300px;
+        z-index: 500;
+        height: calc(100vh - var(--navbar-h));
+        transition: left 0.3s ease;
+        box-shadow: var(--shadow-lg);
+      }
+      .filter-sidebar.open { left: 0; }
+      .mobile-filter-toggle { display: flex; }
+      .mobile-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.5);
+        z-index: 499;
+      }
+      .mobile-overlay.show { display: block; }
+    }
+
+    @media (max-width: 600px) {
+      .buddy-grid {
+        grid-template-columns: 1fr;
+      }
+      .main-content {
+        padding: 1.25rem 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ── Navbar ── -->
+<nav class="navbar">
+  <a href="index.html" class="navbar-brand">📚 <span>StudyBuddy</span></a>
+  <div class="navbar-nav">
+    <a href="study.html" class="nav-link"><i class="fas fa-book-open"></i> Study Space</a>
+    <div class="online-badge">
+      🟢 <span id="online-count">8 online now</span>
+    </div>
+    <a href="profile.html" class="nav-link" id="nav-my-profile" style="display:none;">
+      <i class="fas fa-user-circle"></i> My Profile
+    </a>
+    <div class="nav-user" id="nav-user-info" style="display:none;" onclick="window.location.href='profile.html'">
+      <img src="" alt="avatar" class="nav-user-avatar" id="nav-user-avatar" />
+      <span class="nav-user-name" id="nav-user-name"></span>
+    </div>
+    <a href="profile.html" class="btn btn-primary btn-sm" id="nav-signin">Sign In</a>
+  </div>
+</nav>
+
+<!-- Mobile overlay for sidebar -->
+<div class="mobile-overlay" id="mobile-overlay" onclick="closeSidebar()"></div>
+
+<!-- ── Dashboard Layout ── -->
+<div class="dashboard-layout">
+
+  <!-- ── Filter Sidebar ── -->
+  <aside class="filter-sidebar" id="filter-sidebar">
+    <h2><i class="fas fa-sliders-h"></i> Filters</h2>
+
+    <!-- Search -->
+    <div class="filter-section">
+      <div class="filter-section-label">Search</div>
+      <div class="search-wrap">
+        <i class="fas fa-search"></i>
+        <input type="text" id="search-input" class="form-input" placeholder="Name or bio…" />
+      </div>
+    </div>
+
+    <!-- Subjects -->
+    <div class="filter-section">
+      <div class="filter-section-label">Subjects</div>
+      <div class="subject-checkboxes" id="subject-filter">
+        <span class="subject-chip" data-subject="Mathematics">Math</span>
+        <span class="subject-chip" data-subject="Physics">Physics</span>
+        <span class="subject-chip" data-subject="Chemistry">Chemistry</span>
+        <span class="subject-chip" data-subject="Biology">Biology</span>
+        <span class="subject-chip" data-subject="CS">CS</span>
+        <span class="subject-chip" data-subject="History">History</span>
+        <span class="subject-chip" data-subject="Literature">Literature</span>
+        <span class="subject-chip" data-subject="Economics">Economics</span>
+      </div>
+    </div>
+
+    <!-- Exam Target -->
+    <div class="filter-section">
+      <div class="filter-section-label">Exam Target</div>
+      <select class="form-select" id="exam-filter">
+        <option value="">All Exams</option>
+        <option value="SAT">SAT</option>
+        <option value="JEE">JEE</option>
+        <option value="UPSC">UPSC</option>
+        <option value="GMAT">GMAT</option>
+        <option value="GRE">GRE</option>
+        <option value="IELTS">IELTS</option>
+        <option value="Board Exams">Board Exams</option>
+      </select>
+    </div>
+
+    <!-- Study Style -->
+    <div class="filter-section">
+      <div class="filter-section-label">Study Style</div>
+      <div class="style-radios">
+        <label class="style-radio-label">
+          <input type="radio" name="style-filter" value="" checked />
+          <span>🌐 All Styles</span>
+        </label>
+        <label class="style-radio-label">
+          <input type="radio" name="style-filter" value="deep-focus" />
+          <span>🎯 Deep Focus</span>
+        </label>
+        <label class="style-radio-label">
+          <input type="radio" name="style-filter" value="collaborative" />
+          <span>🤝 Collaborative</span>
+        </label>
+        <label class="style-radio-label">
+          <input type="radio" name="style-filter" value="mixed" />
+          <span>⚡ Mixed</span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Timezone -->
+    <div class="filter-section">
+      <div class="filter-section-label">Timezone</div>
+      <select class="form-select" id="timezone-filter">
+        <option value="">All Timezones</option>
+        <option value="IST">IST</option>
+        <option value="EST">EST</option>
+        <option value="PST">PST</option>
+        <option value="GMT">GMT</option>
+        <option value="CET">CET</option>
+      </select>
+    </div>
+
+    <!-- Online Only -->
+    <div class="filter-section">
+      <div class="toggle-wrap">
+        <span class="toggle-label">🟢 Online Only</span>
+        <label class="toggle">
+          <input type="checkbox" id="online-filter" />
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+    </div>
+
+    <!-- Reset -->
+    <div class="filter-section">
+      <button class="reset-btn" id="reset-btn">
+        <i class="fas fa-undo-alt"></i> Reset Filters
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main Content ── -->
+  <main class="main-content">
+
+    <!-- Profile missing banner -->
+    <div class="profile-banner" id="profile-banner" style="display:none;">
+      <i class="fas fa-exclamation-circle"></i>
+      <p>Set up your profile first to see personalised match scores. <a href="profile.html">Complete your profile →</a></p>
+      <a href="profile.html" class="btn btn-sm" style="background:var(--accent);color:#fff;border-radius:var(--radius-sm);">Get Started</a>
+    </div>
+
+    <!-- Main header -->
+    <div class="main-header">
+      <div>
+        <h1>Find a Study Buddy ✨</h1>
+        <p class="text-muted text-sm mt-1">Matched to your subjects, schedule &amp; style</p>
+      </div>
+      <div style="display:flex;align-items:center;gap:0.75rem;flex-wrap:wrap;">
+        <span class="results-info" id="results-count">
+          <i class="fas fa-users"></i> 12 buddies found
+        </span>
+        <button class="mobile-filter-toggle" id="mobile-filter-toggle" onclick="openSidebar()">
+          <i class="fas fa-filter"></i> Filters
+        </button>
+      </div>
+    </div>
+
+    <!-- Buddy Grid -->
+    <div class="buddy-grid" id="buddy-grid">
+      <!-- Populated by JS -->
+    </div>
+
+  </main>
+</div>
+
+<script src="js/app.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  /* ── State ── */
+  const state = {
+    search: '',
+    subjects: [],
+    exam: '',
+    style: '',
+    timezone: '',
+    onlineOnly: false,
+  };
+
+  let allBuddies = [];
+
+  /* ── Navbar: show user info ── */
+  function initNavbar() {
+    const profile = StudyBuddy.getProfile();
+    const userInfo = document.getElementById('nav-user-info');
+    const userAvatar = document.getElementById('nav-user-avatar');
+    const userName = document.getElementById('nav-user-name');
+    const profileLink = document.getElementById('nav-my-profile');
+    const signinBtn = document.getElementById('nav-signin');
+
+    if (profile) {
+      userInfo.style.display = 'flex';
+      profileLink.style.display = '';
+      signinBtn.style.display = 'none';
+      userName.textContent = profile.name || 'My Profile';
+      userAvatar.src = profile.avatar ||
+        `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'U')}&background=6C63FF&color=fff&size=64&rounded=true`;
+    } else {
+      document.getElementById('profile-banner').style.display = 'flex';
+    }
+  }
+
+  /* ── Load & sort buddies ── */
+  function loadBuddies() {
+    const profile = StudyBuddy.getProfile();
+    allBuddies = StudyBuddy.getMatches(profile);
+    // If no profile, assign a simple display index as matchScore for ordering
+    if (!profile) {
+      allBuddies = allBuddies.map((b, i) => ({
+        ...b,
+        matchScore: Math.max(0, 85 - i * 7)  // fake decreasing scores for visual appeal
+      }));
+    }
+    renderBuddies();
+  }
+
+  /* ── Render ── */
+  function renderBuddies() {
+    const grid = document.getElementById('buddy-grid');
+    const filtered = applyFilters(allBuddies);
+
+    // Update count
+    const countEl = document.getElementById('results-count');
+    countEl.innerHTML = `<i class="fas fa-users"></i> ${filtered.length} budd${filtered.length === 1 ? 'y' : 'ies'} found`;
+
+    if (filtered.length === 0) {
+      grid.innerHTML = `
+        <div class="empty-state-custom">
+          <span class="empty-emoji">🔍</span>
+          <h3>No buddies match your filters</h3>
+          <p>Try adjusting or resetting your filters to see more results.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = filtered.map(renderCard).join('');
+  }
+
+  /* ── Build card HTML ── */
+  function renderCard(buddy) {
+    const score = buddy.matchScore;
+    const badgeClass = score >= 80 ? 'high' : score >= 60 ? 'mid' : 'low';
+    const scoreLabel = score > 0 ? `${score}% Match` : 'New Buddy';
+
+    // Subjects: show up to 3, then +N
+    const shown = buddy.subjects.slice(0, 3);
+    const extra = buddy.subjects.length - shown.length;
+    const pillsHTML = shown.map(s => `<span class="subject-pill">${s}</span>`).join('') +
+      (extra > 0 ? `<span class="subject-pill more">+${extra} more</span>` : '');
+
+    // Study style
+    const styleIcons = { 'deep-focus': '🎯', 'collaborative': '🤝', 'mixed': '⚡' };
+    const styleLabels = { 'deep-focus': 'Deep Focus', 'collaborative': 'Collaborative', 'mixed': 'Mixed' };
+    const styleIcon = styleIcons[buddy.studyStyle] || '📖';
+    const styleLabel = styleLabels[buddy.studyStyle] || buddy.studyStyle;
+
+    const onlineDot = buddy.online
+      ? `<span class="buddy-online-dot" title="Online now"></span>` : '';
+
+    return `
+      <div class="buddy-card fade-in">
+        <div class="buddy-card-top">
+          <div class="buddy-avatar-wrap">
+            <img class="buddy-avatar" src="${buddy.avatar}" alt="${buddy.name}" loading="lazy" />
+            ${onlineDot}
+          </div>
+          <div class="buddy-info">
+            <div class="buddy-name-row">
+              <span class="buddy-name">${buddy.name}</span>
+              <span class="match-badge ${badgeClass}">⭐ ${scoreLabel}</span>
+            </div>
+            <div class="buddy-meta">
+              <span><i class="fas fa-bullseye"></i> ${buddy.examTarget}</span>
+              <span><i class="fas fa-globe"></i> ${buddy.timezone}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="subject-pills">${pillsHTML}</div>
+
+        <div class="study-style-row">
+          <span class="study-style-icon">${styleIcon}</span>
+          <span>${styleLabel}</span>
+        </div>
+
+        <p class="buddy-bio">${escapeHTML(buddy.bio)}</p>
+
+        <div class="buddy-card-footer">
+          <a href="room.html?buddy=${buddy.id}" class="study-together-btn">
+            Study Together <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>`;
+  }
+
+  /* ── Filter logic (AND) ── */
+  function applyFilters(list) {
+    return list.filter(buddy => {
+      // Search: name or bio
+      if (state.search) {
+        const q = state.search.toLowerCase();
+        if (!buddy.name.toLowerCase().includes(q) && !buddy.bio.toLowerCase().includes(q)) {
+          return false;
+        }
+      }
+      // Subjects (at least one must match)
+      if (state.subjects.length > 0) {
+        const hasSubject = state.subjects.some(s => buddy.subjects.includes(s));
+        if (!hasSubject) return false;
+      }
+      // Exam target
+      if (state.exam && buddy.examTarget !== state.exam) return false;
+      // Study style
+      if (state.style && buddy.studyStyle !== state.style) return false;
+      // Timezone
+      if (state.timezone && buddy.timezone !== state.timezone) return false;
+      // Online only
+      if (state.onlineOnly && !buddy.online) return false;
+
+      return true;
+    });
+  }
+
+  /* ── Wire up filter controls ── */
+  function bindFilters() {
+    // Search
+    document.getElementById('search-input').addEventListener('input', e => {
+      state.search = e.target.value.trim();
+      renderBuddies();
+    });
+
+    // Subject chips
+    document.querySelectorAll('.subject-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        const sub = chip.dataset.subject;
+        chip.classList.toggle('active');
+        if (chip.classList.contains('active')) {
+          if (!state.subjects.includes(sub)) state.subjects.push(sub);
+        } else {
+          state.subjects = state.subjects.filter(s => s !== sub);
+        }
+        renderBuddies();
+      });
+    });
+
+    // Exam
+    document.getElementById('exam-filter').addEventListener('change', e => {
+      state.exam = e.target.value;
+      renderBuddies();
+    });
+
+    // Study style radios
+    document.querySelectorAll('input[name="style-filter"]').forEach(radio => {
+      radio.addEventListener('change', e => {
+        state.style = e.target.value;
+        renderBuddies();
+      });
+    });
+
+    // Timezone
+    document.getElementById('timezone-filter').addEventListener('change', e => {
+      state.timezone = e.target.value;
+      renderBuddies();
+    });
+
+    // Online only
+    document.getElementById('online-filter').addEventListener('change', e => {
+      state.onlineOnly = e.target.checked;
+      renderBuddies();
+    });
+
+    // Reset
+    document.getElementById('reset-btn').addEventListener('click', resetFilters);
+  }
+
+  function resetFilters() {
+    state.search = '';
+    state.subjects = [];
+    state.exam = '';
+    state.style = '';
+    state.timezone = '';
+    state.onlineOnly = false;
+
+    document.getElementById('search-input').value = '';
+    document.querySelectorAll('.subject-chip').forEach(c => c.classList.remove('active'));
+    document.getElementById('exam-filter').value = '';
+    document.querySelector('input[name="style-filter"][value=""]').checked = true;
+    document.getElementById('timezone-filter').value = '';
+    document.getElementById('online-filter').checked = false;
+
+    renderBuddies();
+    StudyBuddy.toast('Filters reset', 'info', 2000);
+  }
+
+  /* ── Mobile sidebar ── */
+  window.openSidebar = function () {
+    document.getElementById('filter-sidebar').classList.add('open');
+    document.getElementById('mobile-overlay').classList.add('show');
+  };
+  window.closeSidebar = function () {
+    document.getElementById('filter-sidebar').classList.remove('open');
+    document.getElementById('mobile-overlay').classList.remove('show');
+  };
+
+  /* ── Utility ── */
+  function escapeHTML(str) {
+    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  /* ── Boot ── */
+  document.addEventListener('DOMContentLoaded', () => {
+    initNavbar();
+    loadBuddies();
+    bindFilters();
+    // Trigger fade-in after cards render
+    setTimeout(() => StudyBuddy.initFadeIn(), 50);
+  });
+
+  /* ── Live online count ── */
+  function updateOnlineCount() {
+    const count = StudyBuddy.buddies.filter(b => b.online).length;
+    const el = document.getElementById('online-count');
+    if (el) el.textContent = `${count} online now`;
+  }
+  document.addEventListener('DOMContentLoaded', updateOnlineCount);
+
+})();
+</script>
+</body>
+</html>
